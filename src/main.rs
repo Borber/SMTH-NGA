@@ -3,25 +3,30 @@
 use std::{
     collections::HashSet,
     fs::{File, OpenOptions},
-    io::{Read, Write},
+    io::Write,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // 标记当日是否回复
+    let mut flag = HashSet::new();
+
+    // 有效回复
+    let mut valid = "".to_owned();
+    // 多次回复
+    let mut multi = "".to_owned();
+    // 超过700条
+    let mut over = "".to_owned();
+
+    // 记录
+    let mut records = vec![];
+
     let file = File::open("NGA_Checkin_Stats.csv")?;
 
     let mut rdr = csv::Reader::from_reader(file);
-    let mut flag = HashSet::new();
-    let mut valid = vec![];
-    let mut multi = vec![];
-    let mut over = vec![];
-
-    let mut records = vec![];
-
     for result in rdr.records() {
         let record = result?;
         records.push(record);
     }
-
     records.sort_by(|a, b| {
         let a = a[0].to_owned();
         let a = a.parse::<u64>().unwrap();
@@ -31,22 +36,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let mut count = 0;
-
     for record in records {
         if count >= 700 {
-            over.push(record)
+            over = format!(
+                "{}{}\n",
+                over,
+                record.into_iter().collect::<Vec<_>>().join(",")
+            )
         } else {
             let time = record[1].to_owned();
             let time = time.split_once(' ').unwrap().0.to_owned();
             let name = record[2].to_owned();
             match flag.get(&(time.clone(), name.clone())) {
                 Some(_) => {
-                    multi.push(record);
+                    multi = format!(
+                        "{}{}\n",
+                        multi,
+                        record.into_iter().collect::<Vec<_>>().join(",")
+                    )
                 }
                 None => {
                     count += 1;
                     flag.insert((time, name));
-                    valid.push(record);
+                    valid = format!(
+                        "{}{}\n",
+                        valid,
+                        record.into_iter().collect::<Vec<_>>().join(",")
+                    )
                 }
             }
         }
@@ -55,50 +71,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let file = File::open("NGA_Invalid_Reply.csv")?;
     let mut rdr = csv::Reader::from_reader(file);
 
-    let mut invalid = vec![];
-
+    // 无效回复
+    let mut invalid = "".to_owned();
     for result in rdr.records() {
         let record = result?;
-        invalid.push(record);
+        invalid = format!(
+            "{}{}\n",
+            invalid,
+            record.into_iter().collect::<Vec<_>>().join(",")
+        );
     }
 
-    let mut wtr = csv::WriterBuilder::new().from_path("valid.csv")?;
+    invalid = format!(
+        "{}以下为多次回复\n{}以下为超过700条数据\n{}",
+        invalid, multi, over
+    );
 
-    for record in valid {
-        wtr.write_record(&record)?;
-    }
-    wtr.flush()?;
-    add_bom("valid.csv")?;
-
-    let mut wtr = csv::WriterBuilder::new().from_path("invalid.csv")?;
-    for record in invalid {
-        wtr.write_record(&record)?;
-    }
-
-    println!("{}", multi.len());
-
-    wtr.write_record(["以下为多次回复", "", ""])?;
-    for record in multi {
-        wtr.write_record(&record)?;
-    }
-    wtr.write_record(["以下为超过700条数据", "", ""])?;
-    for record in over {
-        wtr.write_record(&record)?;
-    }
-    wtr.flush()?;
-    add_bom("invalid.csv")?;
+    write("valid.csv", &valid)?;
+    write("invalid.csv", &invalid)?;
 
     Ok(())
 }
 
-fn add_bom(path: &str) -> Result<(), Box<dyn std::error::Error>> {
-    // 打开要处理的文件，并读取文件内容
-    let mut file = OpenOptions::new().read(true).write(true).open(path)?;
-
-    let mut content = Vec::new();
-    file.read_to_end(&mut content)?;
-
-    // 创建一个新的文件，并将 BOM 和原始文件内容写入新文件
+fn write(path: &str, content: &str) -> Result<(), Box<dyn std::error::Error>> {
+    // 创建一个新的文件
     let mut new_file = OpenOptions::new()
         .write(true)
         .create(true)
@@ -108,8 +104,8 @@ fn add_bom(path: &str) -> Result<(), Box<dyn std::error::Error>> {
     // 写入 BOM
     new_file.write_all(&[0xEF, 0xBB, 0xBF])?;
 
-    // 写入原始文件内容
-    new_file.write_all(&content)?;
+    // 写入文件内容
+    new_file.write_all(content.as_bytes())?;
 
     Ok(())
 }
