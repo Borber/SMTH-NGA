@@ -53,7 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 多次回复
     let mut multi = vec![];
 
-    // 超过700条
+    // 超过500条
     let mut over = vec![];
 
     // 标记当日是否回复
@@ -105,7 +105,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .collect::<Vec<_>>()
         .join("\n");
 
-    // 超过700条
+    // 超过500条
     let over = over
         .iter()
         .map(|r| format!("{},{},{}", r.count, r.time, r.name))
@@ -113,7 +113,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .join("\n");
 
     let invalid = format!(
-        "{}\n以下为多次回复\n{}\n以下为超过700条数据\n{}",
+        "{}\n以下为多次回复\n{}\n以下为超过500条数据\n{}",
         invalid, multi, over
     );
 
