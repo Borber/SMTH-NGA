@@ -28,7 +28,7 @@ const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // TODO 获取上一月份
-    let last_mouth = "2023-12";
+    let last_mouth = "2024-01";
     let tid = "20217469";
     let content_records = get_records(tid, last_mouth).await?;
 
