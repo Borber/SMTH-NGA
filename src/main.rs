@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let last_mouth = "2024-01";
     let tid = "20217469";
     let content_records = get_records(tid, last_mouth).await?;
-
+    println!("总计: {} 条", content_records.len());
     // 内容有效
     let mut content_valid = vec![];
 
@@ -53,7 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 多次回复
     let mut multi = vec![];
 
-    // 超过500条
+    // 超过700条
     let mut over = vec![];
 
     // 标记当日是否回复
@@ -61,7 +61,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut count = 0;
     for record in content_valid {
-        if count >= 500 {
+        if count >= 700 {
             over.push(record);
         } else {
             let time = record.time.clone();
@@ -82,7 +82,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("有效回复: {} 条", valid.len());
     println!("无效回复: {} 条", content_invalid.len());
     println!("多次回复: {} 条", multi.len());
-    println!("超过500: {} 条", over.len());
+    println!("超过700: {} 条", over.len());
 
     // 有效回复
     let valid = valid
@@ -113,7 +113,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .join("\n");
 
     let invalid = format!(
-        "{}\n以下为多次回复\n{}\n以下为超过500条数据\n{}",
+        "{}\n以下为多次回复\n{}\n以下为超过700条数据\n{}",
         invalid, multi, over
     );
 
@@ -129,6 +129,7 @@ async fn get_records(tid: &str, last_mouth: &str) -> Result<Vec<Record>> {
     let mut records = vec![];
 
     let mut finish = false;
+    let mut flag = false;
 
     while !finish {
         // 回复楼层
@@ -180,8 +181,6 @@ async fn get_records(tid: &str, last_mouth: &str) -> Result<Vec<Record>> {
             let context = element.text().collect::<String>();
             valids.push(check_valid(context));
         }
-
-        let mut flag = false;
 
         for (index, time) in times.iter().enumerate() {
             if !flag && !time.starts_with(last_mouth) {
