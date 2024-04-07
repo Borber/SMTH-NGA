@@ -9,6 +9,7 @@ use scraper::Html;
 use scraper::Selector;
 use serde_json::Value;
 
+use crate::util::get_last_month_date;
 use crate::util::write;
 
 mod util;
@@ -28,9 +29,9 @@ const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // TODO 获取上一月份
-    let last_mouth = "2024-01";
+    let last_mouth = get_last_month_date();
     let tid = "20217469";
-    let content_records = get_records(tid, last_mouth).await?;
+    let content_records = get_records(tid, &last_mouth).await?;
     println!("总计: {} 条", content_records.len());
     // 内容有效
     let mut content_valid = vec![];
